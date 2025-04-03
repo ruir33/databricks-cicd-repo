@@ -1,0 +1,46 @@
+name: CD Pipeline for Azure Databricks
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Databricks CLI (v0.200+)
+      run: pip install databricks-cli --upgrade
+
+    - name: Debug DATABRICKS_HOST
+      run: |
+        echo "🔍 DATABRICKS_HOST: $DATABRICKS_HOST"
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+
+    - name: Import notebook to Databricks workspace
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      run: |
+        databricks workspace import sample_sales_notebook.py /Workspace/Users/your_username/your_notebook -l PYTHON --overwrite
+
+    - name: Create and run Databricks job
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      run: |
+        echo "📋 Creating job from job-config.json"
+        job_id=$(databricks jobs create --json-file job-config.json | jq -r '.job_id')
+
+        echo "🚀 Running job ID: $job_id"
+        databricks jobs run-now --job-id $job_id
