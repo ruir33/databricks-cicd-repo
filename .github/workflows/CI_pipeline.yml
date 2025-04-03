@@ -1,0 +1,13 @@
+- name: Install legacy Databricks CLI (v0.17.6)
+  run: pip install databricks-cli==0.17.6
+
+- name: Configure Databricks CLI
+  run: |
+    mkdir -p ~/.databricks
+    echo -e "[DEFAULT]\nhost = $DATABRICKS_HOST\ntoken = $DATABRICKS_TOKEN" > ~/.databricks/config
+  env:
+    DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+    DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+- name: Upload sample data to DBFS
+  run: databricks fs cp sample_sales.csv dbfs:/FileStore/sample_sales.csv --overwrite
