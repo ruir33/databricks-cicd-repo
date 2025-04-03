@@ -28,8 +28,8 @@ jobs:
     - name: Configure Databricks CLI
       run: |
         databricks configure --token <<EOF
-        $
-        $
+        $DATABRICKS_HOST
+        $DATABRICKS_TOKEN
         EOF
 
     - name: Upload sample data to DBFS
