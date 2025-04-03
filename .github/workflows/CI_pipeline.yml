@@ -1,0 +1,43 @@
+name: CI Pipeline for Azure Databricks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install compatible dependencies + legacy Databricks CLI
+      run: |
+        python --version
+        pip install --upgrade pip
+        pip install "setuptools<58.0.0" "wheel<1.0.0"
+        pip install databricks-cli==0.17.6
+
+    - name: Configure Databricks CLI
+      run: |
+        echo -e "[DEFAULT]\nhost = $DATABRICKS_HOST\ntoken = $DATABRICKS_TOKEN" > ~/.databrickscfg
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+    - name: Upload sample data to DBFS
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      run: |
+        databricks fs cp sample_sales.csv dbfs:/FileStore/sample_sales.csv --overwrite
