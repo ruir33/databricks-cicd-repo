@@ -1,0 +1,29 @@
+name: CI Pipeline for Azure Databricks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Upload sample data to DBFS using REST API
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      run: |
+        echo "Uploading to DBFS..."
+        curl -X POST "$DATABRICKS_HOST/api/2.0/dbfs/put" \
+          -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+          -F path="/FileStore/sample_sales.csv" \
+          -F contents=@sample_sales.csv \
+          -F overwrite=true
